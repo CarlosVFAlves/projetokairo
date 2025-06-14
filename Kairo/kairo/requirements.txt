@@ -1,0 +1,30 @@
+# Dependências do Projeto Kairo
+# Para instalar: pip install -r requirements.txt
+
+# Comunicação HTTP (para Ollama)
+requests>=2.31.0
+
+# Manipulação de JSON e dados
+json5>=0.9.0
+
+# Cores no terminal
+colorama>=0.4.6
+
+# Utilitários de sistema
+psutil>=5.9.0
+
+# Processamento de texto
+nltk>=3.8.0
+
+# Data e hora
+python-dateutil>=2.8.0
+
+# Logging avançado
+loguru>=0.7.0
+
+# Configurações
+pyyaml>=6.0
+
+# Expressões regulares avançadas
+regex>=2023.0.0
+

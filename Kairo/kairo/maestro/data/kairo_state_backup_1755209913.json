@@ -231,11 +231,27 @@
       "content": "teste",
       "metadata": {},
       "importance": 0.6
+    },
+    {
+      "id": "1755209317876_25",
+      "timestamp": "2025-08-14T22:08:37.876683",
+      "author": "user",
+      "content": "teste",
+      "metadata": {},
+      "importance": 0.6
+    },
+    {
+      "id": "1755209900915_26",
+      "timestamp": "2025-08-14T22:18:20.915754",
+      "author": "user",
+      "content": "teste",
+      "metadata": {},
+      "importance": 0.6
     }
   ],
   "learned_patterns": {},
-  "interaction_count": 17,
+  "interaction_count": 19,
   "birth_time": "2025-06-08T14:45:31.654734",
-  "last_interaction": "2025-08-14T22:07:16.273058",
+  "last_interaction": "2025-08-14T22:18:20.915754",
   "version": "1.0"
 }

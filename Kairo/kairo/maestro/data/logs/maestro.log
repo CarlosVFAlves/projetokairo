@@ -964,3 +964,117 @@
 2025-08-14 22:10:36,650 - maestro.action_executor - INFO - Ações disponíveis no executor: ['speak', 'think', 'express_emotion', 'ask_question', 'request_clarification', 'show_thought', 'change_color', 'clear_screen', 'show_status', 'save_conversation', 'load_conversation', 'show_help', 'show_ascii_art', 'format_text', 'show_separator']
 2025-08-14 22:10:36,650 - maestro.maestro_system - INFO - Iniciando loop principal do Maestro
 2025-08-14 22:10:36,650 - maestro.maestro_system - INFO - EOF detectado - encerrando...
+2025-08-14 22:18:20,879 - maestro.test - INFO - Teste de log
+2025-08-14 22:18:20,909 - maestro.state_manager - INFO - Inicializando StateManager...
+2025-08-14 22:18:20,911 - maestro.state_manager - INFO - Estado do Kairo carregado: 26 memórias
+2025-08-14 22:18:20,912 - maestro.state_manager - INFO - 1 perfis de usuário carregados
+2025-08-14 22:18:20,914 - maestro.state_manager - INFO - Auto-save iniciado
+2025-08-14 22:18:20,915 - maestro.system - INFO - SYSTEM_EVENT: state_manager_initialized - Kairo age: 1615.5h
+2025-08-14 22:18:20,915 - maestro.state_manager - INFO - StateManager inicializado com sucesso
+2025-08-14 22:18:20,919 - maestro.state_manager - INFO - StateManager encerrado
+2025-08-14 22:18:20,921 - maestro.state_manager - INFO - Inicializando StateManager...
+2025-08-14 22:18:20,922 - maestro.state_manager - INFO - Estado do Kairo carregado: 27 memórias
+2025-08-14 22:18:20,922 - maestro.state_manager - INFO - 1 perfis de usuário carregados
+2025-08-14 22:18:20,924 - maestro.state_manager - INFO - Auto-save iniciado
+2025-08-14 22:18:20,924 - maestro.system - INFO - SYSTEM_EVENT: state_manager_initialized - Kairo age: 1615.5h
+2025-08-14 22:18:20,924 - maestro.state_manager - INFO - StateManager inicializado com sucesso
+2025-08-14 22:18:20,924 - maestro.emotion_engine - INFO - Inicializando EmotionEngine...
+2025-08-14 22:18:20,925 - maestro.emotion_engine - INFO - EmotionEngine inicializado com sucesso
+2025-08-14 22:18:22,927 - maestro.emotion_engine - INFO - EmotionEngine encerrado
+2025-08-14 22:18:22,939 - maestro.state_manager - INFO - StateManager encerrado
+2025-08-14 22:18:22,943 - maestro.state_manager - INFO - Inicializando StateManager...
+2025-08-14 22:18:22,944 - maestro.state_manager - INFO - Estado do Kairo carregado: 27 memórias
+2025-08-14 22:18:22,944 - maestro.state_manager - INFO - 1 perfis de usuário carregados
+2025-08-14 22:18:22,945 - maestro.state_manager - INFO - Auto-save iniciado
+2025-08-14 22:18:22,945 - maestro.system - INFO - SYSTEM_EVENT: state_manager_initialized - Kairo age: 1615.5h
+2025-08-14 22:18:22,946 - maestro.state_manager - INFO - StateManager inicializado com sucesso
+2025-08-14 22:18:22,946 - maestro.emotion_engine - INFO - Inicializando EmotionEngine...
+2025-08-14 22:18:22,946 - maestro.emotion_engine - INFO - EmotionEngine inicializado com sucesso
+2025-08-14 22:18:22,947 - maestro.personality_core - INFO - Inicializando PersonalityCore...
+2025-08-14 22:18:22,947 - maestro.personality_core - INFO - Histórico de aprendizado carregado: 0 eventos
+2025-08-14 22:18:22,947 - maestro.personality_core - INFO - Personalidade inicial: {'curiosity': 6.5, 'empathy': 5.0, 'creativity': 5.0, 'logic': 5.0, 'humor': 5.0, 'assertiveness': 5.0, 'patience': 5.0, 'openness': 5.0}
+2025-08-14 22:18:22,947 - maestro.personality_core - INFO - PersonalityCore inicializado com sucesso
+2025-08-14 22:18:22,948 - maestro.personality_core - INFO - PersonalityCore encerrado
+2025-08-14 22:18:24,949 - maestro.emotion_engine - INFO - EmotionEngine encerrado
+2025-08-14 22:18:24,951 - maestro.state_manager - INFO - StateManager encerrado
+2025-08-14 22:18:24,952 - maestro.state_manager - INFO - Inicializando StateManager...
+2025-08-14 22:18:24,952 - maestro.state_manager - INFO - Estado do Kairo carregado: 27 memórias
+2025-08-14 22:18:24,952 - maestro.state_manager - INFO - 1 perfis de usuário carregados
+2025-08-14 22:18:24,953 - maestro.state_manager - INFO - Auto-save iniciado
+2025-08-14 22:18:24,953 - maestro.system - INFO - SYSTEM_EVENT: state_manager_initialized - Kairo age: 1615.5h
+2025-08-14 22:18:24,953 - maestro.state_manager - INFO - StateManager inicializado com sucesso
+2025-08-14 22:18:24,953 - maestro.emotion_engine - INFO - Inicializando EmotionEngine...
+2025-08-14 22:18:24,954 - maestro.emotion_engine - INFO - EmotionEngine inicializado com sucesso
+2025-08-14 22:18:24,954 - maestro.personality_core - INFO - Inicializando PersonalityCore...
+2025-08-14 22:18:24,954 - maestro.personality_core - INFO - Histórico de aprendizado carregado: 0 eventos
+2025-08-14 22:18:24,954 - maestro.personality_core - INFO - Personalidade inicial: {'curiosity': 6.5, 'empathy': 5.0, 'creativity': 5.0, 'logic': 5.0, 'humor': 5.0, 'assertiveness': 5.0, 'patience': 5.0, 'openness': 5.0}
+2025-08-14 22:18:24,955 - maestro.personality_core - INFO - PersonalityCore inicializado com sucesso
+2025-08-14 22:18:24,955 - maestro.prompt_engine - INFO - Inicializando PromptEngine...
+2025-08-14 22:18:24,955 - maestro.prompt_engine - INFO - PromptEngine inicializado com sucesso
+2025-08-14 22:18:24,955 - maestro.personality_core - INFO - PersonalityCore encerrado
+2025-08-14 22:18:26,956 - maestro.emotion_engine - INFO - EmotionEngine encerrado
+2025-08-14 22:18:26,966 - maestro.state_manager - INFO - StateManager encerrado
+2025-08-14 22:18:27,427 - maestro.ollama_client - INFO - Inicializando OllamaClient...
+2025-08-14 22:18:33,445 - maestro.ollama_client - ERROR - Erro ao testar conexão: HTTPConnectionPool(host='localhost', port=11434): Max retries exceeded with url: /api/tags (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x7faef7f18a70>: Failed to establish a new connection: [Errno 111] Connection refused'))
+2025-08-14 22:18:33,445 - maestro.ollama_client - ERROR - Erro ao inicializar OllamaClient: Não foi possível conectar ao Ollama
+2025-08-14 22:18:33,445 - maestro.ollama_client - INFO - OllamaClient encerrado
+2025-08-14 22:18:33,449 - maestro.cli_executor - INFO - Inicializando CLIExecutor...
+2025-08-14 22:18:33,449 - maestro.cli_executor - WARNING - Terminal não suporta cores - usando modo texto simples
+2025-08-14 22:18:33,459 - maestro.cli_executor - INFO - CLIExecutor inicializado com sucesso
+2025-08-14 22:18:33,459 - maestro.cli_executor - INFO - CLIExecutor encerrado
+2025-08-14 22:18:33,481 - maestro.state_manager - INFO - Inicializando StateManager...
+2025-08-14 22:18:33,481 - maestro.state_manager - INFO - Estado do Kairo carregado: 27 memórias
+2025-08-14 22:18:33,482 - maestro.state_manager - INFO - 1 perfis de usuário carregados
+2025-08-14 22:18:33,482 - maestro.state_manager - INFO - Auto-save iniciado
+2025-08-14 22:18:33,482 - maestro.system - INFO - SYSTEM_EVENT: state_manager_initialized - Kairo age: 1615.6h
+2025-08-14 22:18:33,482 - maestro.state_manager - INFO - StateManager inicializado com sucesso
+2025-08-14 22:18:33,482 - maestro.cli_executor - INFO - Inicializando CLIExecutor...
+2025-08-14 22:18:33,482 - maestro.cli_executor - WARNING - Terminal não suporta cores - usando modo texto simples
+2025-08-14 22:18:33,486 - maestro.cli_executor - INFO - CLIExecutor inicializado com sucesso
+2025-08-14 22:18:33,487 - maestro.action_executor - INFO - Inicializando ActionExecutor...
+2025-08-14 22:18:33,487 - maestro.action_executor - INFO - ActionExecutor inicializado com sucesso
+2025-08-14 22:18:33,487 - maestro.action_executor - INFO - ActionExecutor encerrado
+2025-08-14 22:18:33,487 - maestro.cli_executor - INFO - CLIExecutor encerrado
+2025-08-14 22:18:33,489 - maestro.state_manager - INFO - StateManager encerrado
+2025-08-14 22:18:33,498 - maestro.maestro_system - INFO - Inicializando Sistema Maestro...
+2025-08-14 22:18:33,498 - maestro.system - INFO - SYSTEM_EVENT: maestro_startup - Iniciando sistema
+2025-08-14 22:18:33,498 - maestro.maestro_system - INFO - Inicializando módulos cognitivos...
+2025-08-14 22:18:33,498 - maestro.state_manager - INFO - Inicializando StateManager...
+2025-08-14 22:18:33,498 - maestro.state_manager - INFO - Estado do Kairo carregado: 27 memórias
+2025-08-14 22:18:33,499 - maestro.state_manager - INFO - 1 perfis de usuário carregados
+2025-08-14 22:18:33,500 - maestro.state_manager - INFO - Auto-save iniciado
+2025-08-14 22:18:33,501 - maestro.system - INFO - SYSTEM_EVENT: state_manager_initialized - Kairo age: 1615.6h
+2025-08-14 22:18:33,501 - maestro.state_manager - INFO - StateManager inicializado com sucesso
+2025-08-14 22:18:33,501 - maestro.maestro_system - INFO - StateManager inicializado com sucesso
+2025-08-14 22:18:33,501 - maestro.emotion_engine - INFO - Inicializando EmotionEngine...
+2025-08-14 22:18:33,501 - maestro.emotion_engine - INFO - EmotionEngine inicializado com sucesso
+2025-08-14 22:18:33,501 - maestro.maestro_system - INFO - EmotionEngine inicializado com sucesso
+2025-08-14 22:18:33,502 - maestro.personality_core - INFO - Inicializando PersonalityCore...
+2025-08-14 22:18:33,502 - maestro.personality_core - INFO - Histórico de aprendizado carregado: 0 eventos
+2025-08-14 22:18:33,502 - maestro.personality_core - INFO - Personalidade inicial: {'curiosity': 6.5, 'empathy': 5.0, 'creativity': 5.0, 'logic': 5.0, 'humor': 5.0, 'assertiveness': 5.0, 'patience': 5.0, 'openness': 5.0}
+2025-08-14 22:18:33,502 - maestro.personality_core - INFO - PersonalityCore inicializado com sucesso
+2025-08-14 22:18:33,502 - maestro.maestro_system - INFO - PersonalityCore inicializado com sucesso
+2025-08-14 22:18:33,502 - maestro.prompt_engine - INFO - Inicializando PromptEngine...
+2025-08-14 22:18:33,502 - maestro.prompt_engine - INFO - PromptEngine inicializado com sucesso
+2025-08-14 22:18:33,502 - maestro.maestro_system - INFO - PromptEngine inicializado com sucesso
+2025-08-14 22:18:33,503 - maestro.ollama_client - INFO - Inicializando OllamaClient...
+2025-08-14 22:18:39,512 - maestro.ollama_client - ERROR - Erro ao testar conexão: HTTPConnectionPool(host='localhost', port=11434): Max retries exceeded with url: /api/tags (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x7faef7f1aea0>: Failed to establish a new connection: [Errno 111] Connection refused'))
+2025-08-14 22:18:39,513 - maestro.ollama_client - ERROR - Erro ao inicializar OllamaClient: Não foi possível conectar ao Ollama
+2025-08-14 22:18:39,513 - maestro.maestro_system - ERROR - Erro ao inicializar OllamaClient: Não foi possível conectar ao Ollama
+2025-08-14 22:18:39,513 - maestro.maestro_system - INFO - Inicializando executor: cli
+2025-08-14 22:18:39,513 - maestro.cli_executor - INFO - Inicializando CLIExecutor...
+2025-08-14 22:18:39,513 - maestro.cli_executor - WARNING - Terminal não suporta cores - usando modo texto simples
+2025-08-14 22:18:39,518 - maestro.cli_executor - INFO - CLIExecutor inicializado com sucesso
+2025-08-14 22:18:39,518 - maestro.maestro_system - INFO - CLIExecutor inicializado com sucesso
+2025-08-14 22:18:39,518 - maestro.action_executor - INFO - Inicializando ActionExecutor...
+2025-08-14 22:18:39,518 - maestro.action_executor - INFO - ActionExecutor inicializado com sucesso
+2025-08-14 22:18:39,518 - maestro.maestro_system - INFO - ActionExecutor inicializado com sucesso
+2025-08-14 22:18:39,518 - maestro.idle_processor - INFO - Inicializando IdleProcessor...
+2025-08-14 22:18:39,519 - maestro.idle_processor - INFO - IdleProcessor inicializado com sucesso
+2025-08-14 22:18:39,519 - maestro.maestro_system - INFO - IdleProcessor inicializado com sucesso
+2025-08-14 22:18:39,519 - maestro.maestro_system - INFO - Sistema Maestro inicializado com sucesso!
+2025-08-14 22:18:39,519 - maestro.action_executor - INFO - INTERNAL_MONOLOGUE: Sistema inicializado! Tenho 1615.6 horas de vida e 19 interações registradas.
+2025-08-14 22:18:39,519 - maestro.decisions - INFO - DECISION: context=action_execution decision=speak reasoning=parameter: {'text': 'Olá! Eu sou o Kairo. Tenho 1615.6 horas de vida e já tive 19 interações. Como posso ajudá-lo hoje?'}
+2025-08-14 22:18:39,520 - maestro.decisions - INFO - DECISION: context=action_execution decision=express_emotion reasoning=parameter: {'emotion': 'interest', 'intensity': 6.0}
+2025-08-14 22:18:39,520 - maestro.decisions - INFO - DECISION: context=action_execution decision=show_separator reasoning=parameter: {'style': 'line'}
+2025-08-14 22:18:39,520 - maestro.action_executor - WARNING - Comando desconhecido: show_separator

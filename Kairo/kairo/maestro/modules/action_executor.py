@@ -373,7 +373,7 @@ class ActionExecutor:
             self.logger.warning(f"Comando desconhecido: {command}")
             
             # Verifica se o executor suporta este comando
-            available_actions = self.get_available_actions()
+            available_actions = self.executor.get_available_actions()
             
             if command in available_actions:
                 return self.executor.execute_action(command, parameter)

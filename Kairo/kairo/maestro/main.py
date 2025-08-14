@@ -90,8 +90,7 @@ class MaestroSystem:
             
             # Ollama Client
             self.ollama_client = OllamaClient()
-            if not self._safe_initialize(self.ollama_client, "OllamaClient"):
-                return False
+            self._safe_initialize(self.ollama_client, "OllamaClient")
             
             # 2. Inicializa executor
             self.logger.info(f"Inicializando executor: {executor_type}")

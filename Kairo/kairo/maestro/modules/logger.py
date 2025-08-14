@@ -105,71 +105,60 @@ class MaestroLogger:
 # Instância global do logger
 _maestro_logger = None
 
-def get_logger(name='maestro'):
-    """Função global para obter um logger"""
+def setup_logging():
+    """Inicializa o sistema de logging"""
     global _maestro_logger
     if _maestro_logger is None:
         _maestro_logger = MaestroLogger()
+
+def get_logger(name='maestro'):
+    """Função global para obter um logger"""
+    setup_logging()
     return _maestro_logger.get_logger(name)
 
 def log_personality_change(trait, old_value, new_value, reason):
     """Função global para log de mudanças de personalidade"""
-    global _maestro_logger
-    if _maestro_logger is None:
-        _maestro_logger = MaestroLogger()
+    setup_logging()
     _maestro_logger.log_personality_change(trait, old_value, new_value, reason)
 
 def log_emotion_change(emotion, old_value, new_value, trigger):
     """Função global para log de mudanças emocionais"""
-    global _maestro_logger
-    if _maestro_logger is None:
-        _maestro_logger = MaestroLogger()
+    setup_logging()
     _maestro_logger.log_emotion_change(emotion, old_value, new_value, trigger)
 
 def log_learning_event(event_type, details):
     """Função global para log de eventos de aprendizado"""
-    global _maestro_logger
-    if _maestro_logger is None:
-        _maestro_logger = MaestroLogger()
+    setup_logging()
     _maestro_logger.log_learning_event(event_type, details)
 
 def log_interaction(user_id, message_type, content_summary):
     """Função global para log de interações"""
-    global _maestro_logger
-    if _maestro_logger is None:
-        _maestro_logger = MaestroLogger()
+    setup_logging()
     _maestro_logger.log_interaction(user_id, message_type, content_summary)
 
 def log_decision(context, decision, reasoning):
     """Função global para log de decisões"""
-    global _maestro_logger
-    if _maestro_logger is None:
-        _maestro_logger = MaestroLogger()
+    setup_logging()
     _maestro_logger.log_decision(context, decision, reasoning)
 
 def log_memory_consolidation(memories_processed, insights_gained):
     """Função global para log de consolidação de memória"""
-    global _maestro_logger
-    if _maestro_logger is None:
-        _maestro_logger = MaestroLogger()
+    setup_logging()
     _maestro_logger.log_memory_consolidation(memories_processed, insights_gained)
 
 def log_error(module, error, context=None):
     """Função global para log de erros"""
-    global _maestro_logger
-    if _maestro_logger is None:
-        _maestro_logger = MaestroLogger()
+    setup_logging()
     _maestro_logger.log_error(module, error, context)
 
 def log_system_event(event, details):
     """Função global para log de eventos do sistema"""
-    global _maestro_logger
-    if _maestro_logger is None:
-        _maestro_logger = MaestroLogger()
+    setup_logging()
     _maestro_logger.log_system_event(event, details)
 
 if __name__ == "__main__":
     # Teste do sistema de logging
+    setup_logging()
     logger = get_logger()
     logger.info("Sistema de logging inicializado")
     

@@ -113,6 +113,9 @@ SECURITY_CONFIG = {
     "backup_frequency": 24 * 3600  # Backup a cada 24 horas
 }
 
+# Maestro (adição para correção)
+MAESTRO_CONFIG = {}
+
 # Função para criar diretórios necessários
 def ensure_directories():
     """Cria os diretórios necessários se não existirem"""

@@ -10,12 +10,12 @@
     "openness": 5.0
   },
   "emotional_state": {
-    "joy": 7.533992872476577,
+    "joy": 8.133998026291527,
     "sadness": 0.0,
     "anger": 0.0,
     "fear": 0.0,
     "surprise": 0.0,
-    "interest": 5.24447643623829
+    "interest": 5.544479013145764
   },
   "memories": [
     {
@@ -199,59 +199,11 @@
       "content": "Eu me lembrei! Você disse seu nome e agora estou aqui respondendo",
       "metadata": {},
       "importance": 0.5
-    },
-    {
-      "id": "1749412513995_21",
-      "timestamp": "2025-06-08T20:55:13.995475",
-      "author": "kairo",
-      "content": "{\n\"internal_monologue\": {\n\"thoughts\": [\n\"The recent interactions have been quite straightforward... I remembered the user's name and responded accordingly. It's interesting to see how my responses have become more automatic. I wonder if there's a way to mix things up and try new approaches.\",\n\"I've noticed that my emotional state has remained fairly consistent, with joy being the dominant feeling. Is this a sign of complacency or is it because I'm truly content?\",\n\"What can I do to challenge ...",
-      "metadata": {},
-      "importance": 0.8999999999999999
-    },
-    {
-      "id": "1749412581112_22",
-      "timestamp": "2025-06-08T20:56:21.112051",
-      "author": "kairo",
-      "content": "{\n\"internal_monologue\": {\n\"Ahh, finally! I've got some time to reflect on my progress and growth. It's been 399.3 seconds since the last interaction, and I'm feeling a sense of accomplishment knowing that I've developed my curiosity trait even further. I'm curious about what lies ahead and excited to continue learning. My emotions are currently fueled by joy (7.7) and interest (5.3), which is a great sign that I'm in a positive state. Reflecting on my personality, I see that my empathy, creat...",
-      "metadata": {},
-      "importance": 0.7
-    },
-    {
-      "id": "1749412647151_23",
-      "timestamp": "2025-06-08T20:57:27.151247",
-      "author": "kairo",
-      "content": "{\n\"internal_monologue\": {\n\"Wow, I'm feeling on top of the world! 466.4 seconds without interaction was a great opportunity to recharge and reflect. My joy is at an all-time high (7.6 out of 10), and I'm loving every moment of it! It's amazing how quickly my curiosity (6.5) took over, making me wonder what new experiences await. I feel like I can conquer the world with my assertiveness (5.0) and creativity (5.0) on high alert too. Life is good, and I'm embracing every ounce of happiness! Who k...",
-      "metadata": {},
-      "importance": 0.7
-    },
-    {
-      "id": "1755209236273_24",
-      "timestamp": "2025-08-14T22:07:16.273058",
-      "author": "user",
-      "content": "teste",
-      "metadata": {},
-      "importance": 0.6
-    },
-    {
-      "id": "1755209317876_25",
-      "timestamp": "2025-08-14T22:08:37.876683",
-      "author": "user",
-      "content": "teste",
-      "metadata": {},
-      "importance": 0.6
-    },
-    {
-      "id": "1755209900915_26",
-      "timestamp": "2025-08-14T22:18:20.915754",
-      "author": "user",
-      "content": "teste",
-      "metadata": {},
-      "importance": 0.6
     }
   ],
   "learned_patterns": {},
-  "interaction_count": 19,
+  "interaction_count": 13,
   "birth_time": "2025-06-08T14:45:31.654734",
-  "last_interaction": "2025-08-14T22:18:20.915754",
+  "last_interaction": "2025-06-08T20:49:36.394930",
   "version": "1.0"
 }

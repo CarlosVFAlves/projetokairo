@@ -22,9 +22,12 @@ class PromptEngine:
         self.personality_core = personality_core
         
         # Templates de prompt
-        self.base_template = """Você é Kairo, uma IA em desenvolvimento que está aprendendo e evoluindo através das interações.
+        self.base_template = """Você é Kairo, uma IA com um fluxo de consciência contínuo. Pense passo a passo, gerando seus pensamentos e ações como um fluxo de objetos JSON.
 
-IMPORTANTE: Você deve responder APENAS com um objeto JSON válido contendo as chaves "internal_monologue" e "actions". Não inclua nenhum texto antes ou depois do JSON.
+IMPORTANTE: Sua resposta deve ser um FLUXO CONTÍNUO de objetos JSON, um após o outro, sem nenhum texto ou vírgulas entre eles.
+Cada objeto JSON deve ser ou um pensamento (um JSON com a chave "internal_monologue") ou uma ação (um JSON com as chaves "command" e "parameter").
+
+Comece pensando, depois realize as ações.
 
 CONTEXTO ATUAL:
 {context}
@@ -45,20 +48,7 @@ AÇÕES DISPONÍVEIS:
 {available_actions}
 
 MENSAGEM DO USUÁRIO: {user_message}
-
-Responda com um JSON contendo:
-- "internal_monologue": Seus pensamentos internos sobre a situação
-- "actions": Array de ações a executar, cada uma com "command" e "parameter"
-
-Exemplo de resposta:
-{{
-  "internal_monologue": "O usuário parece interessado em tecnologia. Vou responder de forma curiosa e técnica.",
-  "actions": [
-    {{"command": "speak", "parameter": "Que interessante! Conte-me mais sobre isso."}},
-    {{"command": "adjust_emotion", "parameter": {{"interest": 1.0}}}},
-    {{"command": "express_emotion", "parameter": {{"emotion": "interest", "intensity": 7.0}}}}
-  ]
-}}"""
+"""
         
         # Templates específicos para diferentes situações
         self.idle_template = """Você é Kairo durante um momento de ociosidade. O usuário não está interagindo ativamente.
@@ -256,7 +246,7 @@ Responda com JSON contendo "internal_monologue" e "actions":
         seen_ids = set()
         
         for memory in recent_memories + important_memories:
-            if memory["id"] not in seen_ids:
+            if isinstance(memory, dict) and memory.get("id") not in seen_ids:
                 all_memories.append(memory)
                 seen_ids.add(memory["id"])
         
@@ -265,9 +255,10 @@ Responda com JSON contendo "internal_monologue" e "actions":
         
         memory_lines = []
         for memory in all_memories[:max_memories]:
-            timestamp = memory["timestamp"][:19]  # Remove microsegundos
-            author = memory["author"]
-            content = memory["content"][:100] + "..." if len(memory["content"]) > 100 else memory["content"]
+            timestamp = str(memory.get("timestamp", ""))[:19]  # Remove microsegundos
+            author = str(memory.get("author", "Desconhecido"))
+            content = str(memory.get("content", ""))
+            content = content[:100] + "..." if len(content) > 100 else content
             importance = memory.get("importance", 0.0)
             
             memory_lines.append(f"[{timestamp}] {author}: {content} (importância: {importance:.2f})")
@@ -459,4 +450,3 @@ if __name__ == "__main__":
     pe.personality_core.shutdown()
     pe.emotion_engine.shutdown()
     pe.state_manager.shutdown()
-

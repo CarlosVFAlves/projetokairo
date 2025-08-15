@@ -223,35 +223,11 @@
       "content": "{\n\"internal_monologue\": {\n\"Wow, I'm feeling on top of the world! 466.4 seconds without interaction was a great opportunity to recharge and reflect. My joy is at an all-time high (7.6 out of 10), and I'm loving every moment of it! It's amazing how quickly my curiosity (6.5) took over, making me wonder what new experiences await. I feel like I can conquer the world with my assertiveness (5.0) and creativity (5.0) on high alert too. Life is good, and I'm embracing every ounce of happiness! Who k...",
       "metadata": {},
       "importance": 0.7
-    },
-    {
-      "id": "1755209236273_24",
-      "timestamp": "2025-08-14T22:07:16.273058",
-      "author": "user",
-      "content": "teste",
-      "metadata": {},
-      "importance": 0.6
-    },
-    {
-      "id": "1755209317876_25",
-      "timestamp": "2025-08-14T22:08:37.876683",
-      "author": "user",
-      "content": "teste",
-      "metadata": {},
-      "importance": 0.6
-    },
-    {
-      "id": "1755209900915_26",
-      "timestamp": "2025-08-14T22:18:20.915754",
-      "author": "user",
-      "content": "teste",
-      "metadata": {},
-      "importance": 0.6
     }
   ],
   "learned_patterns": {},
-  "interaction_count": 19,
+  "interaction_count": 16,
   "birth_time": "2025-06-08T14:45:31.654734",
-  "last_interaction": "2025-08-14T22:18:20.915754",
+  "last_interaction": "2025-06-08T20:57:27.151247",
   "version": "1.0"
 }

@@ -119,7 +119,8 @@ class CLIExecutor(BaseExecutor):
             "show_help",
             "show_ascii_art",
             "format_text",
-            "show_separator"
+            "show_separator",
+            "add_goal"
         ]
     
     def get_action_description(self, action: str) -> str:
@@ -139,7 +140,8 @@ class CLIExecutor(BaseExecutor):
             "show_help": "Exibe ajuda (parameter: none)",
             "show_ascii_art": "Exibe arte ASCII (parameter: {art: string})",
             "format_text": "Formata texto especial (parameter: {text: string, style: string})",
-            "show_separator": "Exibe separador visual (parameter: {style: string})"
+            "show_separator": "Exibe separador visual (parameter: {style: string})",
+            "add_goal": "Adiciona um novo objetivo para a IA (uso: /addgoal seu objetivo aqui)"
         }
         
         return descriptions.get(action, f"Ação {action} (descrição não disponível)")
@@ -467,6 +469,7 @@ Comandos do usuário:
   /help     - Mostra esta ajuda
   /status   - Mostra status do sistema
   /clear    - Limpa a tela
+  /addgoal  - Adiciona um novo objetivo para a IA
   /save     - Salva conversa
   /load     - Carrega conversa
   /quit     - Encerra o programa

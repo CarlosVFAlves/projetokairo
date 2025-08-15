@@ -272,23 +272,23 @@ class MaestroSystem:
         try:
             # Atualiza timestamp de interação
             self.idle_processor.update_interaction_time()
-            
+
             # Registra mensagem na memória com detecção de informações importantes
             user_id = self.state_manager.get_current_user_id()
             memory_id = self.state_manager.add_memory(f"Usuário disse: {message}", "user_message", user_id)
-            
+
             # Analisa emocionalmente a mensagem (com filtro anti-spam)
             self.emotion_engine.analyze_text(message, "user")
-            
+
             # Analisa para aprendizado de personalidade
             self.personality_core.analyze_interaction(message, "user_message")
-            
+
             # Gera prompt contextualizado
             prompt = self.prompt_engine.generate_prompt(message, "conversation")
-            
+
             # Envia para Ollama
             response = self.ollama_client.send_prompt(prompt)
-            
+
             if response:
                 # Registra resposta na memória
                 if "actions" in response:
@@ -297,21 +297,21 @@ class MaestroSystem:
                             response_text = action.get("parameter", "")
                             if response_text:
                                 self.state_manager.add_memory(f"Kairo respondeu: {response_text}", "kairo_response", user_id)
-                
+
                 # Executa plano de ação
                 success = self.action_executor.execute_plan(response)
-                
+
                 if not success:
                     self.logger.warning("Falha ao executar plano de ação")
                     self._handle_execution_failure()
             else:
                 self.logger.error("Nenhuma resposta do Ollama")
                 self._handle_ollama_failure()
-                
+
         except Exception as e:
             self.logger.error(f"Erro ao processar mensagem do usuário: {e}")
             self._handle_processing_error(str(e))
-    
+
     def _show_system_status(self):
         """Exibe status detalhado do sistema"""
         try:
@@ -430,4 +430,3 @@ def main():
 
 if __name__ == "__main__":
     sys.exit(main())
-

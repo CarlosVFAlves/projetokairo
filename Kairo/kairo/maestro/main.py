@@ -13,13 +13,17 @@ from typing import Any
 # Adiciona o diretório do projeto ao path
 sys.path.append(str(Path(__file__).parent))
 
-from config import OLLAMA_CONFIG, PERSONALITY_CONFIG, EMOTION_CONFIG, MEMORY_CONFIG, IDLE_CONFIG
+from config import (
+    LLM_CLIENT, OLLAMA_CONFIG, OPENAI_CONFIG,
+    PERSONALITY_CONFIG, EMOTION_CONFIG, MEMORY_CONFIG, IDLE_CONFIG
+)
 from modules.logger import get_logger, log_system_event
 from modules.state_manager import StateManager
 from modules.emotion_engine import EmotionEngine
 from modules.personality_core import PersonalityCore
 from modules.prompt_engine import PromptEngine
 from modules.ollama_client import OllamaClient
+from modules.openai_client import OpenAIClient
 from modules.action_executor import ActionExecutor
 from modules.idle_processor import IdleProcessor
 from executors.cli_executor import CLIExecutor
@@ -40,7 +44,7 @@ class MaestroSystem:
         self.emotion_engine = None
         self.personality_core = None
         self.prompt_engine = None
-        self.ollama_client = None
+        self.llm_client = None
         self.action_executor = None
         self.idle_processor = None
         
@@ -82,10 +86,17 @@ class MaestroSystem:
             if not self._safe_initialize(self.prompt_engine, "PromptEngine"):
                 return False
             
-            # Ollama Client (non-fatal for UI testing)
-            self.ollama_client = OllamaClient()
-            self._safe_initialize(self.ollama_client, "OllamaClient")
-            
+            # LLM Client (non-fatal)
+            if LLM_CLIENT == "openai":
+                self.llm_client = OpenAIClient()
+                self._safe_initialize(self.llm_client, "OpenAIClient")
+            elif LLM_CLIENT == "ollama":
+                self.llm_client = OllamaClient()
+                self._safe_initialize(self.llm_client, "OllamaClient")
+            else:
+                self.logger.error(f"LLM_CLIENT inválido na configuração: {LLM_CLIENT}")
+                self.llm_client = None
+
             if executor_type == "cli":
                 self.executor = CLIExecutor()
             else:
@@ -102,7 +113,7 @@ class MaestroSystem:
                 self.emotion_engine,
                 self.personality_core,
                 self.prompt_engine,
-                self.ollama_client,
+                self.llm_client,
                 self.action_executor
             )
             if not self._safe_initialize(self.idle_processor, "IdleProcessor"):
@@ -129,9 +140,10 @@ class MaestroSystem:
             self.logger.info(f"{module_name} inicializado com sucesso")
             return True
         except Exception as e:
-            self.logger.error(f"Erro ao inicializar {module_name}: {e}", exc_info=True)
+            self.logger.error(f"Erro ao inicializar {module_name}: {e}")
             # Para o cliente LLM, não queremos que a falha seja fatal
-            if module_name == "OllamaClient":
+            if "Client" in module_name:
+                self.logger.warning(f"{module_name} não pôde ser inicializado, mas o sistema continuará.")
                 return True
             return False
     
@@ -146,23 +158,35 @@ class MaestroSystem:
         signal.signal(signal.SIGTERM, signal_handler)
     
     def _show_welcome_message(self):
-        """Exibe mensagem de boas-vindas"""
+        """Gera e exibe uma mensagem de boas-vindas dinâmica."""
         try:
-            kairo_age = self.state_manager.get_kairo_age_hours()
-            interaction_count = self.state_manager.get_interaction_count()
+            self.logger.info("Gerando mensagem de boas-vindas dinâmica...")
             
-            welcome_plan = {
-                "internal_monologue": f"Sistema inicializado! Tenho {kairo_age:.1f} horas de vida e {interaction_count} interações registradas.",
-                "actions": [
-                    {"command": "speak", "parameter": {"text": f"Olá! Eu sou o Kairo. Tenho {kairo_age:.1f} horas de vida e já tive {interaction_count} interações. Como posso ajudá-lo hoje?"}},
-                    {"command": "express_emotion", "parameter": {"emotion": "interest", "intensity": 6.0}},
-                    {"command": "show_separator", "parameter": {"style": "line"}}
-                ]
-            }
-            self.action_executor.execute_plan(welcome_plan)
+            if self.llm_client and self.llm_client.is_running():
+                prompt = self.prompt_engine.generate_prompt(None, "wakeup")
+                welcome_plan = self.llm_client.send_prompt(prompt)
+                if welcome_plan and "error" not in welcome_plan:
+                    self.action_executor.execute_plan(welcome_plan)
+                else:
+                    self.logger.error(f"Falha ao gerar plano de boas-vindas dinâmico. Resposta: {welcome_plan}")
+                    self._handle_llm_failure()
+            else:
+                self.logger.warning("LLM não conectado. Usando mensagem de boas-vindas padrão.")
+                kairo_age = self.state_manager.get_kairo_age_hours()
+                interaction_count = self.state_manager.get_interaction_count()
+                fallback_plan = {
+                    "internal_monologue": f"LLM offline. Usando saudação padrão. Sistema inicializado! Tenho {kairo_age:.1f} horas de vida e {interaction_count} interações registradas.",
+                    "actions": [
+                        {"command": "speak", "parameter": {"text": f"Olá! Eu sou o Kairo. Tenho {kairo_age:.1f} horas de vida e já tive {interaction_count} interações. Como posso ajudá-lo hoje?"}},
+                        {"command": "express_emotion", "parameter": {"emotion": "interest", "intensity": 6.0}},
+                        {"command": "show_separator", "parameter": {"style": "line"}}
+                    ]
+                }
+                self.action_executor.execute_plan(fallback_plan)
+
         except Exception as e:
-            self.logger.error(f"Erro ao exibir mensagem de boas-vindas: {e}")
-    
+            self.logger.error(f"Erro ao exibir mensagem de boas-vindas: {e}", exc_info=True)
+
     def run(self):
         """Executa o loop principal do sistema"""
         if not self.initialization_complete:
@@ -243,13 +267,13 @@ class MaestroSystem:
             self.personality_core.analyze_interaction(message, "user_message")
 
             prompt = self.prompt_engine.generate_prompt(message, "conversation")
-            response = self.ollama_client.send_prompt(prompt)
+            response = self.llm_client.send_prompt(prompt)
 
             if response:
                 if "actions" in response:
                     for action in response["actions"]:
                         if action.get("command") == "speak":
-                            response_text = action.get("parameter", "")
+                            response_text = action.get("parameter", {}).get("text", "")
                             if response_text:
                                 self.state_manager.add_memory(f"Kairo respondeu: {response_text}", "kairo_response", user_id)
 
@@ -258,8 +282,8 @@ class MaestroSystem:
                     self.logger.warning("Falha ao executar plano de ação")
                     self._handle_execution_failure()
             else:
-                self.logger.error("Nenhuma resposta do Ollama")
-                self._handle_ollama_failure()
+                self.logger.error("Nenhuma resposta do LLM")
+                self._handle_llm_failure()
 
         except Exception as e:
             self.logger.error(f"Erro ao processar mensagem do usuário: {e}", exc_info=True)
@@ -268,13 +292,17 @@ class MaestroSystem:
     def _show_system_status(self):
         """Exibe status detalhado do sistema"""
         try:
+            llm_status = "Desconectado"
+            if self.llm_client and self.llm_client.is_running():
+                llm_status = f"Conectado ({LLM_CLIENT})"
+
             status_data = {
                 "Sistema": "Maestro v1.0",
                 "Status": "Funcionando" if self.running else "Parado",
                 "Idade do Kairo": f"{self.state_manager.get_kairo_age_hours():.1f}h",
                 "Interações": self.state_manager.get_interaction_count(),
                 "Memórias": len(self.state_manager.kairo_state["memories"]),
-                "Ollama": "Conectado" if self.ollama_client.is_connected else "Desconectado",
+                "LLM": llm_status,
                 "Executor": self.executor.executor_id,
                 "Ações executadas": self.action_executor.stats["total_actions"]
             }
@@ -292,8 +320,8 @@ class MaestroSystem:
         fallback_plan = {"internal_monologue": "Houve um problema ao executar minha resposta.", "actions": [{"command": "speak", "parameter": {"text": "Desculpe, tive um problema interno. Pode repetir sua mensagem?"}}]}
         self.action_executor.execute_plan(fallback_plan)
     
-    def _handle_ollama_failure(self):
-        """Trata falha na comunicação com o Ollama"""
+    def _handle_llm_failure(self):
+        """Trata falha na comunicação com o LLM"""
         fallback_plan = {"internal_monologue": "Não consegui me comunicar com meu sistema de processamento.", "actions": [{"command": "speak", "parameter": {"text": "Desculpe, estou com problemas de comunicação interna. Tente novamente em alguns momentos."}}]}
         self.action_executor.execute_plan(fallback_plan)
     
@@ -315,7 +343,7 @@ class MaestroSystem:
                 (self.idle_processor, "IdleProcessor"),
                 (self.action_executor, "ActionExecutor"),
                 (self.executor, "Executor"),
-                (self.ollama_client, "OllamaClient"),
+                (self.llm_client, f"{LLM_CLIENT.capitalize()}Client"),
                 (self.prompt_engine, "PromptEngine"),
                 (self.personality_core, "PersonalityCore"),
                 (self.emotion_engine, "EmotionEngine"),

@@ -41,7 +41,8 @@ class ActionExecutor:
             "remember_important": self._handle_remember_important,
             
             # Ações específicas do executor
-            "executor_action": self._handle_executor_action
+            "executor_action": self._handle_executor_action,
+            "show_separator": self._handle_show_separator
         }
         
         # Estatísticas
@@ -365,6 +366,15 @@ class ActionExecutor:
             
         except Exception as e:
             self.logger.error(f"Erro em executor_action: {e}")
+            return False
+
+    def _handle_show_separator(self, parameter: Any) -> bool:
+        """Executa o comando para mostrar um separador visual."""
+        try:
+            style = parameter.get("style", "line") if isinstance(parameter, dict) else "line"
+            return self.executor.execute_action("show_separator", {"style": style})
+        except Exception as e:
+            self.logger.error(f"Erro em show_separator: {e}")
             return False
     
     def _handle_unknown_command(self, command: str, parameter: Any) -> bool:

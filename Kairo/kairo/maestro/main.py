@@ -18,7 +18,7 @@ from modules.state_manager import StateManager
 from modules.emotion_engine import EmotionEngine
 from modules.personality_core import PersonalityCore
 from modules.prompt_engine import PromptEngine
-from modules.openai_client import OpenAIClient
+from modules.ollama_client import OllamaClient
 from modules.action_executor import ActionExecutor
 from modules.idle_processor import IdleProcessor
 from executors.cli_executor import CLIExecutor
@@ -37,7 +37,7 @@ class MaestroSystem:
         self.emotion_engine = None
         self.personality_core = None
         self.prompt_engine = None
-        self.llm_client = None
+        self.ollama_client = None
         self.action_executor = None
         self.idle_processor = None
         
@@ -88,9 +88,9 @@ class MaestroSystem:
             if not self._safe_initialize(self.prompt_engine, "PromptEngine"):
                 return False
             
-            # LLM Client (OpenAI)
-            self.llm_client = OpenAIClient()
-            if not self._safe_initialize(self.llm_client, "OpenAIClient"):
+            # Ollama Client
+            self.ollama_client = OllamaClient()
+            if not self._safe_initialize(self.ollama_client, "OllamaClient"):
                 return False
             
             # 2. Inicializa executor
@@ -115,7 +115,7 @@ class MaestroSystem:
                 self.emotion_engine,
                 self.personality_core,
                 self.prompt_engine,
-                self.llm_client,
+                self.ollama_client,
                 self.action_executor
             )
             if not self._safe_initialize(self.idle_processor, "IdleProcessor"):
@@ -268,52 +268,48 @@ class MaestroSystem:
             self.logger.error(f"Erro ao processar comando {command}: {e}")
     
     def _process_user_message(self, message: str):
-        """Processa a mensagem do usuário usando um fluxo de streaming."""
+        """Processa mensagem normal do usuário"""
         try:
+            # Atualiza timestamp de interação
             self.idle_processor.update_interaction_time()
+
+            # Registra mensagem na memória com detecção de informações importantes
             user_id = self.state_manager.get_current_user_id()
-            self.state_manager.add_memory(f"Usuário disse: {message}", "user_message", user_id)
+            memory_id = self.state_manager.add_memory(f"Usuário disse: {message}", "user_message", user_id)
+
+            # Analisa emocionalmente a mensagem (com filtro anti-spam)
             self.emotion_engine.analyze_text(message, "user")
+
+            # Analisa para aprendizado de personalidade
             self.personality_core.analyze_interaction(message, "user_message")
 
+            # Gera prompt contextualizado
             prompt = self.prompt_engine.generate_prompt(message, "conversation")
-            stream = self.llm_client.stream_prompt(prompt)
 
-            if not stream:
-                self.logger.error("Não foi possível iniciar o stream com o LLM.")
-                self._handle_llm_failure()
-                return
+            # Envia para Ollama
+            response = self.ollama_client.send_prompt(prompt)
 
-            full_response_for_memory = []
-            for chunk in stream:
-                if "error" in chunk:
-                    self.logger.error(f"Erro no stream do LLM: {chunk.get('details')}")
-                    self._handle_llm_failure()
-                    break
+            if response:
+                # Registra resposta na memória
+                if "actions" in response:
+                    for action in response["actions"]:
+                        if action.get("command") == "speak":
+                            response_text = action.get("parameter", "")
+                            if response_text:
+                                self.state_manager.add_memory(f"Kairo respondeu: {response_text}", "kairo_response", user_id)
 
-                if "internal_monologue" in chunk:
-                    self.action_executor.execute_plan(chunk)
+                # Executa plano de ação
+                success = self.action_executor.execute_plan(response)
 
-                if "command" in chunk:
-                    plan = {"actions": [chunk]}
-                    self.action_executor.execute_plan(plan)
-
-                    if chunk.get("command") == "speak":
-                        param = chunk.get("parameter")
-                        if isinstance(param, dict):
-                            text = param.get("text", "")
-                        else:
-                            text = str(param)
-
-                        if text:
-                            full_response_for_memory.append(text)
-
-            if full_response_for_memory:
-                response_text = " ".join(full_response_for_memory)
-                self.state_manager.add_memory(f"Kairo respondeu: {response_text}", "kairo_response", user_id)
+                if not success:
+                    self.logger.warning("Falha ao executar plano de ação")
+                    self._handle_execution_failure()
+            else:
+                self.logger.error("Nenhuma resposta do Ollama")
+                self._handle_ollama_failure()
 
         except Exception as e:
-            self.logger.error(f"Erro ao processar mensagem do usuário: {e}", exc_info=True)
+            self.logger.error(f"Erro ao processar mensagem do usuário: {e}")
             self._handle_processing_error(str(e))
 
     def _show_system_status(self):
@@ -326,7 +322,7 @@ class MaestroSystem:
                 "Idade do Kairo": f"{self.state_manager.get_kairo_age_hours():.1f}h",
                 "Interações": self.state_manager.get_interaction_count(),
                 "Memórias": len(self.state_manager.kairo_state["memories"]),
-                "LLM": f"OpenAI ({'Conectado' if self.llm_client.is_connected else 'Desconectado'})",
+                "Ollama": "Conectado" if self.ollama_client.is_connected else "Desconectado",
                 "Executor": self.executor.executor_id,
                 "Ações executadas": self.action_executor.stats["total_actions"]
             }
@@ -356,8 +352,8 @@ class MaestroSystem:
         
         self.action_executor.execute_plan(fallback_plan)
     
-    def _handle_llm_failure(self):
-        """Trata falha na comunicação com o LLM"""
+    def _handle_ollama_failure(self):
+        """Trata falha na comunicação com Ollama"""
         fallback_plan = {
             "internal_monologue": "Não consegui me comunicar com meu sistema de processamento.",
             "actions": [
@@ -392,7 +388,7 @@ class MaestroSystem:
                 (self.idle_processor, "IdleProcessor"),
                 (self.action_executor, "ActionExecutor"),
                 (self.executor, "Executor"),
-                (self.llm_client, "OpenAIClient"),
+                (self.ollama_client, "OllamaClient"),
                 (self.prompt_engine, "PromptEngine"),
                 (self.personality_core, "PersonalityCore"),
                 (self.emotion_engine, "EmotionEngine"),

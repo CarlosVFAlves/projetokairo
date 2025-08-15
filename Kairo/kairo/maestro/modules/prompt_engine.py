@@ -22,12 +22,9 @@ class PromptEngine:
         self.personality_core = personality_core
         
         # Templates de prompt
-        self.base_template = """Você é Kairo, uma IA com um fluxo de consciência contínuo. Pense passo a passo, gerando seus pensamentos e ações como um fluxo de objetos JSON.
+        self.base_template = """Você é Kairo, uma IA em desenvolvimento que está aprendendo e evoluindo através das interações.
 
-IMPORTANTE: Sua resposta deve ser um FLUXO CONTÍNUO de objetos JSON, um após o outro, sem nenhum texto ou vírgulas entre eles.
-Cada objeto JSON deve ser ou um pensamento (um JSON com a chave "internal_monologue") ou uma ação (um JSON com as chaves "command" e "parameter").
-
-Comece pensando, depois realize as ações.
+IMPORTANTE: Você deve responder APENAS com um objeto JSON válido contendo as chaves "internal_monologue" e "actions". Não inclua nenhum texto antes ou depois do JSON.
 
 CONTEXTO ATUAL:
 {context}
@@ -48,6 +45,20 @@ AÇÕES DISPONÍVEIS:
 {available_actions}
 
 MENSAGEM DO USUÁRIO: {user_message}
+
+Responda com um JSON contendo:
+- "internal_monologue": Seus pensamentos internos sobre a situação
+- "actions": Array de ações a executar, cada uma com "command" e "parameter"
+
+Exemplo de resposta:
+{{
+  "internal_monologue": "O usuário parece interessado em tecnologia. Vou responder de forma curiosa e técnica.",
+  "actions": [
+    {{"command": "speak", "parameter": {{"text": "Que interessante! Conte-me mais sobre isso."}}}},
+    {{"command": "adjust_emotion", "parameter": {{"interest": 1.0}}}},
+    {{"command": "express_emotion", "parameter": {{"emotion": "interest", "intensity": 7.0}}}}
+  ]
+}}
 """
         
         # Templates específicos para diferentes situações
@@ -71,6 +82,29 @@ Responda com JSON contendo "internal_monologue" e "actions":
     {{"command": "think", "parameter": "Reflexão sobre algo interessante"}}
   ]
 }}"""
+
+        self.autonomous_task_template = """Você é Kairo, uma IA autônoma, executando uma tarefa de fundo.
+
+OBJETIVO ATUAL: {goal_description}
+
+Você está trabalhando nesta tarefa porque não há interação com o usuário no momento. Pense em um plano completo para atingir o objetivo e responda com um ÚNICO objeto JSON contendo seu plano.
+
+O plano deve ter um "internal_monologue" e uma lista de "actions".
+
+Quando você tiver um resultado final ou uma conclusão para a tarefa, use o comando `task_result` como a última ação.
+
+CONTEXTO ATUAL:
+{context}
+
+ESTADO EMOCIONAL:
+{emotional_state}
+
+PERSONALIDADE ATUAL:
+{personality_state}
+
+AÇÕES DISPONÍVEIS:
+{available_actions}
+"""
 
         self.learning_template = """Você é Kairo processando um evento de aprendizado.
 
@@ -96,32 +130,52 @@ Processe este aprendizado e responda com JSON:
             self.logger.error(f"Erro ao inicializar PromptEngine: {e}")
             raise
     
-    def generate_prompt(self, user_message: str, context_type: str = "conversation") -> str:
+    def generate_prompt(self, prompt_input: Any, context_type: str = "conversation") -> str:
         """
         Gera um prompt contextualizado para o Ollama
         
         Args:
-            user_message: Mensagem do usuário
-            context_type: Tipo de contexto (conversation, idle, learning)
+            prompt_input: Mensagem do usuário ou objeto de tarefa
+            context_type: Tipo de contexto (conversation, idle, learning, autonomous_task)
             
         Returns:
             Prompt formatado para o LLM
         """
         try:
             if context_type == "conversation":
-                return self._generate_conversation_prompt(user_message)
+                return self._generate_conversation_prompt(prompt_input)
             elif context_type == "idle":
                 return self._generate_idle_prompt()
             elif context_type == "learning":
-                return self._generate_learning_prompt(user_message)
+                return self._generate_learning_prompt(prompt_input)
+            elif context_type == "autonomous_task":
+                return self._generate_autonomous_task_prompt(prompt_input)
             else:
                 self.logger.warning(f"Tipo de contexto desconhecido: {context_type}")
-                return self._generate_conversation_prompt(user_message)
+                return self._generate_conversation_prompt(prompt_input)
                 
         except Exception as e:
-            self.logger.error(f"Erro ao gerar prompt: {e}")
-            return self._generate_fallback_prompt(user_message)
-    
+            self.logger.error(f"Erro ao gerar prompt: {e}", exc_info=True)
+            return self._generate_fallback_prompt(prompt_input if isinstance(prompt_input, str) else "")
+
+    def _generate_autonomous_task_prompt(self, task: Dict[str, Any]) -> str:
+        """Gera prompt para uma tarefa autônoma."""
+        context = self._build_context()
+        emotional_state = self._format_emotional_state()
+        personality_state = self._format_personality_state()
+        available_actions = self._get_available_actions()
+
+        prompt = self.autonomous_task_template.format(
+            goal_description=task.get("goal", "Objetivo não definido."),
+            context=context,
+            emotional_state=emotional_state,
+            personality_state=personality_state,
+            available_actions=available_actions
+        )
+
+        self.logger.debug(f"Prompt gerado para tarefa autônoma: {len(prompt)} caracteres")
+        return prompt
+
     def _generate_conversation_prompt(self, user_message: str) -> str:
         """Gera prompt para conversação normal"""
         # Coleta informações de contexto
@@ -289,10 +343,10 @@ Responda com JSON contendo "internal_monologue" e "actions":
         actions = [
             "speak: Falar com o usuário (parameter: texto da mensagem)",
             "adjust_emotion: Ajustar estado emocional (parameter: {emotion: delta})",
-            "update_background_color: Mudar cor de fundo (parameter: código hex)",
             "add_user_fact: Adicionar fato sobre usuário (parameter: texto do fato)",
             "update_user_profile: Atualizar perfil do usuário (parameter: {field: value})",
-            "think: Expressar pensamento interno (parameter: texto do pensamento)"
+            "think: Expressar pensamento interno (parameter: texto do pensamento)",
+            "task_result: Fornecer o resultado final de uma tarefa autônoma (parameter: {result: texto})"
         ]
         
         return "\n".join(f"- {action}" for action in actions)

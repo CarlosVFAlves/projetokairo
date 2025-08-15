@@ -12,6 +12,8 @@ from datetime import datetime
 
 from executors.base_executor import BaseExecutor, ExecutorCapabilities, ActionResult
 from modules.logger import get_logger
+from prompt_toolkit import print_formatted_text
+from prompt_toolkit.formatted_text import FormattedText
 
 class CLIExecutor(BaseExecutor):
     """
@@ -23,24 +25,19 @@ class CLIExecutor(BaseExecutor):
         super().__init__("cli_executor")
         self.logger = get_logger('cli_executor')
         
-        # Configurações de exibição
-        self.colors = {
-            "reset": "\033[0m",
-            "bold": "\033[1m",
-            "dim": "\033[2m",
-            "red": "\033[31m",
-            "green": "\033[32m",
-            "yellow": "\033[33m",
-            "blue": "\033[34m",
-            "magenta": "\033[35m",
-            "cyan": "\033[36m",
-            "white": "\033[37m",
-            "bg_red": "\033[41m",
-            "bg_green": "\033[42m",
-            "bg_yellow": "\033[43m",
-            "bg_blue": "\033[44m",
-            "bg_magenta": "\033[45m",
-            "bg_cyan": "\033[46m"
+        # Mapeamento de nomes de cores para prompt_toolkit
+        self.styles = {
+            "bold": "bold",
+            "dim": "fg:gray",
+            "red": "fg:red",
+            "green": "fg:green",
+            "yellow": "fg:yellow",
+            "blue": "fg:blue",
+            "magenta": "fg:magenta",
+            "cyan": "fg:cyan",
+            "white": "fg:white",
+            "bg_red": "bg:red",
+            "bg_yellow": "bg:yellow",
         }
         
         # Estado da interface
@@ -84,11 +81,6 @@ class CLIExecutor(BaseExecutor):
         try:
             self.logger.info("Inicializando CLIExecutor...")
             
-            # Verifica se o terminal suporta cores
-            if not self._supports_colors():
-                self.logger.warning("Terminal não suporta cores - usando modo texto simples")
-                self.colors = {key: "" for key in self.colors.keys()}
-            
             # Limpa a tela e mostra banner
             self._clear_screen()
             self._show_banner()
@@ -119,8 +111,7 @@ class CLIExecutor(BaseExecutor):
             "show_help",
             "show_ascii_art",
             "format_text",
-            "show_separator",
-            "add_goal"
+            "show_separator"
         ]
     
     def get_action_description(self, action: str) -> str:
@@ -140,8 +131,7 @@ class CLIExecutor(BaseExecutor):
             "show_help": "Exibe ajuda (parameter: none)",
             "show_ascii_art": "Exibe arte ASCII (parameter: {art: string})",
             "format_text": "Formata texto especial (parameter: {text: string, style: string})",
-            "show_separator": "Exibe separador visual (parameter: {style: string})",
-            "add_goal": "Adiciona um novo objetivo para a IA (uso: /addgoal seu objetivo aqui)"
+            "show_separator": "Exibe separador visual (parameter: {style: string})"
         }
         
         return descriptions.get(action, f"Ação {action} (descrição não disponível)")
@@ -374,7 +364,7 @@ class CLIExecutor(BaseExecutor):
             else:
                 color = str(parameters)
             
-            if color in self.colors:
+            if color in self.styles:
                 self.current_emotion_color = color
                 return True
             
@@ -469,7 +459,6 @@ Comandos do usuário:
   /help     - Mostra esta ajuda
   /status   - Mostra status do sistema
   /clear    - Limpa a tela
-  /addgoal  - Adiciona um novo objetivo para a IA
   /save     - Salva conversa
   /load     - Carrega conversa
   /quit     - Encerra o programa
@@ -563,10 +552,6 @@ Configurações:
     
     # Métodos auxiliares
     
-    def _supports_colors(self) -> bool:
-        """Verifica se o terminal suporta cores"""
-        return hasattr(sys.stdout, 'isatty') and sys.stdout.isatty()
-    
     def _clear_screen(self):
         """Limpa a tela"""
         os.system('cls' if os.name == 'nt' else 'clear')
@@ -588,24 +573,21 @@ Configurações:
         self._print_colored(banner, "cyan")
         self._print_colored("Kairo está inicializando...\n", "green")
     
-    def _print_colored(self, text: str, color: str):
-        """Imprime texto colorido"""
-        color_code = self.colors.get(color, "")
-        reset_code = self.colors.get("reset", "")
+    def _print_colored(self, text: str, style_name: str = "white"):
+        """Imprime texto formatado usando prompt_toolkit."""
+        style = self.styles.get(style_name, "")
+        formatted_text = FormattedText([(style, text)])
+        print_formatted_text(formatted_text)
         
-        output = f"{color_code}{text}{reset_code}"
-        print(output)
-        
-        # Adiciona ao buffer
+        # Adiciona ao buffer de log (sem formatação)
         with self.buffer_lock:
             self.output_buffer.append(text)
-            
-            # Limita tamanho do buffer
             if len(self.output_buffer) > 1000:
                 self.output_buffer = self.output_buffer[-800:]
     
-    def _print_wrapped(self, text: str, color: str):
-        """Imprime texto com quebra de linha"""
+    def _print_wrapped(self, text: str, style_name: str = "white"):
+        """Imprime texto com quebra de linha usando prompt_toolkit."""
+        style = self.styles.get(style_name, "")
         words = text.split()
         current_line = ""
         
@@ -614,11 +596,11 @@ Configurações:
                 current_line += " " + word if current_line else word
             else:
                 if current_line:
-                    self._print_colored(current_line, color)
+                    self._print_colored(current_line, style_name)
                 current_line = word
         
         if current_line:
-            self._print_colored(current_line, color)
+            self._print_colored(current_line, style_name)
     
     def _get_timestamp(self) -> str:
         """Obtém timestamp formatado"""
@@ -672,4 +654,3 @@ if __name__ == "__main__":
         cli.shutdown()
     else:
         print("Erro ao inicializar CLIExecutor")
-

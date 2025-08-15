@@ -12,21 +12,26 @@ DATA_DIR = BASE_DIR / "data"
 PROFILES_DIR = DATA_DIR / "profiles"
 LOGS_DIR = DATA_DIR / "logs"
 
+# --- Configurações do Cliente LLM ---
+# Escolha o cliente a ser usado: "ollama" ou "openai"
+LLM_CLIENT = "openai"
+
 # Configurações do Ollama
 OLLAMA_CONFIG = {
-    "base_url": "http://localhost:11434",
-    "model": "llama3.2:3b",  # Modelo padrão, pode ser alterado
+    "base_url": os.getenv("OLLAMA_BASE_URL", "http://localhost:11434"),
+    "model": os.getenv("OLLAMA_MODEL", "llama3"),
     "timeout": 30,
     "max_retries": 3,
     "temperature": 0.7,
-    "max_tokens": 1000
+    "max_tokens": 1500
 }
 
-# Configurações da OpenAI
+# Configurações do OpenAI
 OPENAI_CONFIG = {
     "api_key": os.getenv("OPENAI_API_KEY"),
-    "model": "gpt-4-turbo",
-    "streaming_model": "gpt-4-turbo",
+    "model": os.getenv("OPENAI_MODEL", "gpt-4-turbo"),
+    "timeout": 30,
+    "max_retries": 3,
     "temperature": 0.7,
     "max_tokens": 1500
 }

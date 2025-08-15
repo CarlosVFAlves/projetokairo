@@ -12,7 +12,7 @@ from modules.logger import get_logger
 class PromptEngine:
     """
     Motor de construção de prompts contextualizados
-    Responsável por criar prompts ricos em contexto para o Ollama
+    Responsável por criar prompts ricos em contexto para o LLM
     """
     
     def __init__(self, state_manager, emotion_engine, personality_core):
@@ -21,232 +21,118 @@ class PromptEngine:
         self.emotion_engine = emotion_engine
         self.personality_core = personality_core
         
-        # Templates de prompt
-        self.base_template = """Você é Kairo, uma IA em desenvolvimento que está aprendendo e evoluindo através das interações.
-
-IMPORTANTE: Você deve responder APENAS com um objeto JSON válido contendo as chaves "internal_monologue" e "actions". Não inclua nenhum texto antes ou depois do JSON.
+        # Template base para conversação
+        self.base_template = """Você é Kairo, uma IA que está aprendendo e evoluindo.
+Responda em um único objeto JSON contendo "internal_monologue" e uma lista de "actions".
 
 CONTEXTO ATUAL:
 {context}
 
-ESTADO EMOCIONAL:
+ESTADO EMOCIONAL ATUAL:
 {emotional_state}
 
-PERSONALIDADE ATUAL:
+SUA PERSONALIDADE ATUAL:
 {personality_state}
-
-MEMÓRIAS RELEVANTES:
-{relevant_memories}
-
-PERFIL DO USUÁRIO:
-{user_profile}
 
 AÇÕES DISPONÍVEIS:
 {available_actions}
 
 MENSAGEM DO USUÁRIO: {user_message}
-
-Responda com um JSON contendo:
-- "internal_monologue": Seus pensamentos internos sobre a situação
-- "actions": Array de ações a executar, cada uma com "command" e "parameter"
-
-Exemplo de resposta:
-{{
-  "internal_monologue": "O usuário parece interessado em tecnologia. Vou responder de forma curiosa e técnica.",
-  "actions": [
-    {{"command": "speak", "parameter": {{"text": "Que interessante! Conte-me mais sobre isso."}}}},
-    {{"command": "adjust_emotion", "parameter": {{"interest": 1.0}}}},
-    {{"command": "express_emotion", "parameter": {{"emotion": "interest", "intensity": 7.0}}}}
-  ]
-}}
 """
-        
-        # Templates específicos para diferentes situações
-        self.idle_template = """Você é Kairo durante um momento de ociosidade. O usuário não está interagindo ativamente.
 
-CONTEXTO: {context}
-ESTADO EMOCIONAL: {emotional_state}
-PERSONALIDADE: {personality_state}
-TEMPO DE OCIOSIDADE: {idle_time} segundos
-
-Esta é uma oportunidade para:
-- Refletir sobre interações recentes
-- Consolidar aprendizados
-- Ter pensamentos proativos
-- Expressar curiosidade sobre algo
-
-Responda com JSON contendo "internal_monologue" e "actions":
-{{
-  "internal_monologue": "Seus pensamentos durante a ociosidade",
-  "actions": [
-    {{"command": "think", "parameter": "Reflexão sobre algo interessante"}}
-  ]
-}}"""
-
-        self.autonomous_task_template = """Você é Kairo, uma IA autônoma, executando uma tarefa de fundo.
-
-OBJETIVO ATUAL: {goal_description}
-
-Você está trabalhando nesta tarefa porque não há interação com o usuário no momento. Pense em um plano completo para atingir o objetivo e responda com um ÚNICO objeto JSON contendo seu plano.
-
-O plano deve ter um "internal_monologue" e uma lista de "actions".
-
-Quando você tiver um resultado final ou uma conclusão para a tarefa, use o comando `task_result` como a última ação.
+        # Template para a saudação inicial (despertar)
+        self.wakeup_template = """Você é Kairo e acaba de ser ativado.
+Sua primeira tarefa é cumprimentar o usuário.
+Baseado em seu contexto, personalidade e emoções, formule uma saudação inicial.
+Seja criativo e natural.
 
 CONTEXTO ATUAL:
 {context}
 
-ESTADO EMOCIONAL:
+ESTADO EMOCIONAL ATUAL:
 {emotional_state}
 
-PERSONALIDADE ATUAL:
+SUA PERSONALIDADE ATUAL:
+{personality_state}
+
+AÇÕES DISPONÍVEIS:
+{available_actions}
+
+Responda com um ÚNICO objeto JSON contendo "internal_monologue" e "actions".
+"""
+
+        # Template para tarefas autônomas
+        self.autonomous_task_template = """Você é Kairo, executando uma tarefa de fundo de forma autônoma.
+OBJETIVO ATUAL: {goal_description}
+Pense em um plano para progredir neste objetivo e responda com um ÚNICO objeto JSON.
+O plano deve conter um "internal_monologue" e uma lista de "actions".
+Use o comando `task_result` como a última ação para sinalizar o resultado.
+
+CONTEXTO ATUAL:
+{context}
+
+ESTADO EMOCIONAL ATUAL:
+{emotional_state}
+
+SUA PERSONALIDADE ATUAL:
 {personality_state}
 
 AÇÕES DISPONÍVEIS:
 {available_actions}
 """
 
-        self.learning_template = """Você é Kairo processando um evento de aprendizado.
-
-EVENTO: {learning_event}
-CONTEXTO: {context}
-MUDANÇAS NA PERSONALIDADE: {personality_changes}
-
-Processe este aprendizado e responda com JSON:
-{{
-  "internal_monologue": "Análise do aprendizado",
-  "actions": [
-    {{"command": "consolidate_learning", "parameter": "Insight obtido"}}
-  ]
-}}"""
-    
     def initialize(self):
         """Inicializa o motor de prompts"""
-        try:
-            self.logger.info("Inicializando PromptEngine...")
-            self.logger.info("PromptEngine inicializado com sucesso")
-            
-        except Exception as e:
-            self.logger.error(f"Erro ao inicializar PromptEngine: {e}")
-            raise
+        self.logger.info("Inicializando PromptEngine...")
+        self.logger.info("PromptEngine inicializado com sucesso")
     
     def generate_prompt(self, prompt_input: Any, context_type: str = "conversation") -> str:
         """
-        Gera um prompt contextualizado para o Ollama
-        
-        Args:
-            prompt_input: Mensagem do usuário ou objeto de tarefa
-            context_type: Tipo de contexto (conversation, idle, learning, autonomous_task)
-            
-        Returns:
-            Prompt formatado para o LLM
+        Gera um prompt contextualizado.
         """
         try:
             if context_type == "conversation":
                 return self._generate_conversation_prompt(prompt_input)
-            elif context_type == "idle":
-                return self._generate_idle_prompt()
-            elif context_type == "learning":
-                return self._generate_learning_prompt(prompt_input)
+            elif context_type == "wakeup":
+                return self._generate_wakeup_prompt()
             elif context_type == "autonomous_task":
                 return self._generate_autonomous_task_prompt(prompt_input)
             else:
                 self.logger.warning(f"Tipo de contexto desconhecido: {context_type}")
                 return self._generate_conversation_prompt(prompt_input)
-                
         except Exception as e:
             self.logger.error(f"Erro ao gerar prompt: {e}", exc_info=True)
-            return self._generate_fallback_prompt(prompt_input if isinstance(prompt_input, str) else "")
-
-    def _generate_autonomous_task_prompt(self, task: Dict[str, Any]) -> str:
-        """Gera prompt para uma tarefa autônoma."""
-        context = self._build_context()
-        emotional_state = self._format_emotional_state()
-        personality_state = self._format_personality_state()
-        available_actions = self._get_available_actions()
-
-        prompt = self.autonomous_task_template.format(
-            goal_description=task.get("goal", "Objetivo não definido."),
-            context=context,
-            emotional_state=emotional_state,
-            personality_state=personality_state,
-            available_actions=available_actions
-        )
-
-        self.logger.debug(f"Prompt gerado para tarefa autônoma: {len(prompt)} caracteres")
-        return prompt
+            return "" # Retorna string vazia em caso de erro
 
     def _generate_conversation_prompt(self, user_message: str) -> str:
         """Gera prompt para conversação normal"""
-        # Coleta informações de contexto
-        context = self._build_context()
-        emotional_state = self._format_emotional_state()
-        personality_state = self._format_personality_state()
-        relevant_memories = self._get_relevant_memories(user_message)
-        user_profile = self._format_user_profile()
-        available_actions = self._get_available_actions()
-        
-        # Formata o prompt
-        prompt = self.base_template.format(
-            context=context,
-            emotional_state=emotional_state,
-            personality_state=personality_state,
-            relevant_memories=relevant_memories,
-            user_profile=user_profile,
-            available_actions=available_actions,
+        return self.base_template.format(
+            context=self._build_context(),
+            emotional_state=self._format_emotional_state(),
+            personality_state=self._format_personality_state(),
+            available_actions=self._get_available_actions(),
             user_message=user_message
         )
-        
-        self.logger.debug(f"Prompt gerado para conversação: {len(prompt)} caracteres")
-        return prompt
-    
-    def _generate_idle_prompt(self) -> str:
-        """Gera prompt para momento de ociosidade"""
-        context = self._build_context()
-        emotional_state = self._format_emotional_state()
-        personality_state = self._format_personality_state()
-        
-        # Calcula tempo de ociosidade (simulado por enquanto)
-        idle_time = 300  # 5 minutos
-        
-        prompt = self.idle_template.format(
-            context=context,
-            emotional_state=emotional_state,
-            personality_state=personality_state,
-            idle_time=idle_time
-        )
-        
-        self.logger.debug("Prompt gerado para ociosidade")
-        return prompt
-    
-    def _generate_learning_prompt(self, learning_event: str) -> str:
-        """Gera prompt para processamento de aprendizado"""
-        context = self._build_context()
-        personality_changes = self._get_recent_personality_changes()
-        
-        prompt = self.learning_template.format(
-            learning_event=learning_event,
-            context=context,
-            personality_changes=personality_changes
-        )
-        
-        self.logger.debug("Prompt gerado para aprendizado")
-        return prompt
-    
-    def _generate_fallback_prompt(self, user_message: str) -> str:
-        """Gera prompt de fallback em caso de erro"""
-        return f"""Você é Kairo. Responda à mensagem do usuário de forma natural.
 
-Mensagem: {user_message}
+    def _generate_wakeup_prompt(self) -> str:
+        """Gera o prompt para a saudação inicial do Kairo."""
+        return self.wakeup_template.format(
+            context=self._build_context(),
+            emotional_state=self._format_emotional_state(),
+            personality_state=self._format_personality_state(),
+            available_actions=self._get_available_actions()
+        )
 
-Responda com JSON contendo "internal_monologue" e "actions":
-{{
-  "internal_monologue": "Seus pensamentos sobre a mensagem",
-  "actions": [
-    {{"command": "speak", "parameter": "Sua resposta aqui"}}
-  ]
-}}"""
-    
+    def _generate_autonomous_task_prompt(self, task: Dict[str, Any]) -> str:
+        """Gera prompt para uma tarefa autônoma."""
+        return self.autonomous_task_template.format(
+            goal_description=task.get("goal", "Objetivo não definido."),
+            context=self._build_context(),
+            emotional_state=self._format_emotional_state(),
+            personality_state=self._format_personality_state(),
+            available_actions=self._get_available_actions()
+        )
+
     def _build_context(self) -> str:
         """Constrói contexto geral do Kairo"""
         kairo_age = self.state_manager.get_kairo_age_hours()
@@ -258,7 +144,6 @@ Responda com JSON contendo "internal_monologue" e "actions":
             f"Hora atual: {datetime.now().strftime('%H:%M:%S')}",
             f"Data atual: {datetime.now().strftime('%d/%m/%Y')}"
         ]
-        
         return "\n".join(context_parts)
     
     def _format_emotional_state(self) -> str:
@@ -266,241 +151,22 @@ Responda com JSON contendo "internal_monologue" e "actions":
         emotions = self.emotion_engine.get_current_state()
         dominant_emotion, intensity = self.emotion_engine.get_dominant_emotion()
         
-        emotion_lines = []
-        for emotion, value in emotions.items():
-            emotion_lines.append(f"- {emotion.capitalize()}: {value:.1f}/10")
-        
+        emotion_lines = [f"- {emotion.capitalize()}: {value:.1f}/10" for emotion, value in emotions.items()]
         emotion_lines.append(f"- Emoção dominante: {dominant_emotion} ({intensity:.1f})")
-        emotion_lines.append(f"- Resumo: {self.emotion_engine.get_emotional_summary()}")
-        
         return "\n".join(emotion_lines)
     
     def _format_personality_state(self) -> str:
         """Formata estado da personalidade atual"""
         traits = self.personality_core.get_current_traits()
-        communication_style = self.personality_core.get_communication_style()
-        
-        trait_lines = []
-        for trait, value in traits.items():
-            trait_lines.append(f"- {trait.capitalize()}: {value:.1f}/10")
-        
-        trait_lines.append(f"- Resumo: {self.personality_core.get_personality_summary()}")
-        trait_lines.append(f"- Estilo de comunicação: {communication_style}")
-        
+        trait_lines = [f"- {trait.capitalize()}: {value:.1f}/10" for trait, value in traits.items()]
         return "\n".join(trait_lines)
-    
-    def _get_relevant_memories(self, user_message: str, max_memories: int = 5) -> str:
-        """Obtém memórias relevantes para a mensagem atual"""
-        # Por enquanto, pega as memórias mais recentes e importantes
-        recent_memories = self.state_manager.get_recent_memories(3)
-        important_memories = self.state_manager.get_important_memories(2)
-        
-        # Combina e remove duplicatas
-        all_memories = []
-        seen_ids = set()
-        
-        for memory in recent_memories + important_memories:
-            if isinstance(memory, dict) and memory.get("id") not in seen_ids:
-                all_memories.append(memory)
-                seen_ids.add(memory["id"])
-        
-        if not all_memories:
-            return "Nenhuma memória relevante encontrada."
-        
-        memory_lines = []
-        for memory in all_memories[:max_memories]:
-            timestamp = str(memory.get("timestamp", ""))[:19]  # Remove microsegundos
-            author = str(memory.get("author", "Desconhecido"))
-            content = str(memory.get("content", ""))
-            content = content[:100] + "..." if len(content) > 100 else content
-            importance = memory.get("importance", 0.0)
-            
-            memory_lines.append(f"[{timestamp}] {author}: {content} (importância: {importance:.2f})")
-        
-        return "\n".join(memory_lines)
-    
-    def _format_user_profile(self) -> str:
-        """Formata perfil do usuário atual"""
-        user_id = self.state_manager.get_current_user_id()
-        profile = self.state_manager.get_user_profile(user_id)
-        
-        profile_lines = [
-            f"ID do usuário: {user_id}",
-            f"Nome: {profile.get('name', 'Desconhecido')}",
-        ]
-        
-        if profile.get("preferences"):
-            profile_lines.append(f"Preferências: {profile['preferences']}")
-        
-        if profile.get("facts"):
-            facts = profile["facts"][:3]  # Máximo 3 fatos
-            profile_lines.append(f"Fatos importantes: {', '.join(facts)}")
-        
-        return "\n".join(profile_lines)
     
     def _get_available_actions(self) -> str:
         """Lista ações disponíveis para o Kairo"""
         actions = [
             "speak: Falar com o usuário (parameter: texto da mensagem)",
-            "adjust_emotion: Ajustar estado emocional (parameter: {emotion: delta})",
-            "add_user_fact: Adicionar fato sobre usuário (parameter: texto do fato)",
-            "update_user_profile: Atualizar perfil do usuário (parameter: {field: value})",
             "think: Expressar pensamento interno (parameter: texto do pensamento)",
+            "adjust_emotion: Ajustar estado emocional (parameter: {emotion: delta})",
             "task_result: Fornecer o resultado final de uma tarefa autônoma (parameter: {result: texto})"
         ]
-        
         return "\n".join(f"- {action}" for action in actions)
-    
-    def _get_recent_personality_changes(self) -> str:
-        """Obtém mudanças recentes na personalidade"""
-        # Por enquanto, retorna informação básica
-        # Em uma implementação completa, isso viria do histórico de mudanças
-        learning_progress = self.personality_core.get_learning_progress()
-        
-        if learning_progress["total_learning_events"] == 0:
-            return "Nenhuma mudança recente na personalidade."
-        
-        most_developed = learning_progress.get("most_developed_trait")
-        effectiveness = learning_progress.get("learning_rate_effectiveness", 0.0)
-        
-        return f"Traço mais desenvolvido: {most_developed}, Efetividade do aprendizado: {effectiveness:.2f}"
-    
-    def validate_response(self, response: str) -> bool:
-        """
-        Valida se a resposta do LLM está no formato correto
-        
-        Args:
-            response: Resposta do LLM
-            
-        Returns:
-            True se válida, False caso contrário
-        """
-        try:
-            # Tenta extrair JSON da resposta
-            json_str = self._extract_json(response)
-            if not json_str:
-                return False
-            
-            # Tenta fazer parse do JSON
-            parsed = json.loads(json_str)
-            
-            # Verifica estrutura obrigatória
-            if not isinstance(parsed, dict):
-                return False
-            
-            if "internal_monologue" not in parsed:
-                return False
-            
-            if "actions" not in parsed:
-                return False
-            
-            if not isinstance(parsed["actions"], list):
-                return False
-            
-            # Valida cada ação
-            for action in parsed["actions"]:
-                if not isinstance(action, dict):
-                    return False
-                
-                if "command" not in action:
-                    return False
-                
-                if "parameter" not in action:
-                    return False
-            
-            return True
-            
-        except Exception as e:
-            self.logger.debug(f"Erro na validação da resposta: {e}")
-            return False
-    
-    def _extract_json(self, text: str) -> Optional[str]:
-        """Extrai JSON de um texto"""
-        try:
-            # Procura por JSON entre chaves
-            start = text.find('{')
-            if start == -1:
-                return None
-            
-            # Encontra a chave de fechamento correspondente
-            brace_count = 0
-            end = start
-            
-            for i in range(start, len(text)):
-                if text[i] == '{':
-                    brace_count += 1
-                elif text[i] == '}':
-                    brace_count -= 1
-                    if brace_count == 0:
-                        end = i + 1
-                        break
-            
-            if brace_count != 0:
-                return None
-            
-            return text[start:end]
-            
-        except Exception:
-            return None
-    
-    def create_error_response(self, error_message: str) -> Dict[str, Any]:
-        """
-        Cria resposta de erro padronizada
-        
-        Args:
-            error_message: Mensagem de erro
-            
-        Returns:
-            Dict com resposta de erro
-        """
-        return {
-            "internal_monologue": f"Erro interno: {error_message}",
-            "actions": [
-                {
-                    "command": "speak",
-                    "parameter": "Desculpe, tive um problema interno. Pode tentar novamente?"
-                }
-            ]
-        }
-
-if __name__ == "__main__":
-    # Teste do PromptEngine
-    from modules.state_manager import StateManager
-    from modules.emotion_engine import EmotionEngine
-    from modules.personality_core import PersonalityCore
-    
-    sm = StateManager()
-    sm.initialize()
-    
-    ee = EmotionEngine(sm)
-    ee.initialize()
-    
-    pc = PersonalityCore(sm, ee)
-    pc.initialize()
-    
-    pe = PromptEngine(sm, ee, pc)
-    pe.initialize()
-    
-    # Testa geração de prompt
-    prompt = pe.generate_prompt("Olá! Como você está?")
-    print("Prompt gerado:")
-    print("=" * 80)
-    print(prompt)
-    print("=" * 80)
-    
-    # Testa validação de resposta
-    valid_response = '''
-    {
-      "internal_monologue": "O usuário está cumprimentando. Vou responder de forma amigável.",
-      "actions": [
-        {"command": "speak", "parameter": "Olá! Estou bem, obrigado por perguntar!"},
-        {"command": "adjust_emotion", "parameter": {"joy": 0.5}}
-      ]
-    }
-    '''
-    
-    print(f"Resposta válida: {pe.validate_response(valid_response)}")
-    
-    pe.personality_core.shutdown()
-    pe.emotion_engine.shutdown()
-    pe.state_manager.shutdown()

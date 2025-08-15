@@ -1,8 +1,8 @@
 # **Projeto Kairo \- README e Roteiro de Evolução Definitivo**
 
 Autor: Desenvolvido por Carlos Alves com assistência da IA Gemini/Manus.  
-Versão de Referência: 0.0.1
-Roteiro Planejado: v0.0.1+
+Versão de Referência: 1.1 (Visão \- Consciência em Streaming)
+Roteiro Planejado: v1.1 a v1.6
 Linguagem: Português do Brasil
 
 ## **1\. Visão Geral e Filosofia de Design**

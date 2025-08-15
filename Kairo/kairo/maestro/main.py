@@ -8,6 +8,7 @@ import time
 import signal
 import threading
 from pathlib import Path
+from typing import Any
 
 # Adiciona o diretório do projeto ao path
 sys.path.append(str(Path(__file__).parent))
@@ -22,6 +23,8 @@ from modules.ollama_client import OllamaClient
 from modules.action_executor import ActionExecutor
 from modules.idle_processor import IdleProcessor
 from executors.cli_executor import CLIExecutor
+from prompt_toolkit import PromptSession
+from prompt_toolkit.formatted_text import FormattedText
 
 class MaestroSystem:
     """
@@ -50,16 +53,11 @@ class MaestroSystem:
         
         # Thread de entrada do usuário
         self.input_thread = None
-    
+        self.session = PromptSession()
+
     def initialize(self, executor_type: str = "cli") -> bool:
         """
         Inicializa o sistema Maestro
-        
-        Args:
-            executor_type: Tipo de executor (cli, web, etc.)
-            
-        Returns:
-            True se inicializado com sucesso
         """
         try:
             self.logger.info("Inicializando Sistema Maestro...")
@@ -68,48 +66,37 @@ class MaestroSystem:
             # 1. Inicializa módulos cognitivos na ordem correta
             self.logger.info("Inicializando módulos cognitivos...")
             
-            # State Manager (base para todos os outros)
             self.state_manager = StateManager()
             if not self._safe_initialize(self.state_manager, "StateManager"):
                 return False
             
-            # Emotion Engine
             self.emotion_engine = EmotionEngine(self.state_manager)
             if not self._safe_initialize(self.emotion_engine, "EmotionEngine"):
                 return False
             
-            # Personality Core
             self.personality_core = PersonalityCore(self.state_manager, self.emotion_engine)
             if not self._safe_initialize(self.personality_core, "PersonalityCore"):
                 return False
             
-            # Prompt Engine
             self.prompt_engine = PromptEngine(self.state_manager, self.emotion_engine, self.personality_core)
             if not self._safe_initialize(self.prompt_engine, "PromptEngine"):
                 return False
             
-            # Ollama Client
+            # Ollama Client (non-fatal for UI testing)
             self.ollama_client = OllamaClient()
-            if not self._safe_initialize(self.ollama_client, "OllamaClient"):
-                return False
-            
-            # 2. Inicializa executor
-            self.logger.info(f"Inicializando executor: {executor_type}")
+            self._safe_initialize(self.ollama_client, "OllamaClient")
             
             if executor_type == "cli":
                 self.executor = CLIExecutor()
             else:
                 raise Exception(f"Tipo de executor desconhecido: {executor_type}")
-            
             if not self._safe_initialize(self.executor, f"{executor_type.upper()}Executor"):
                 return False
-            
-            # 3. Inicializa Action Executor (precisa do executor)
+
             self.action_executor = ActionExecutor(self.executor, self.state_manager)
             if not self._safe_initialize(self.action_executor, "ActionExecutor"):
                 return False
             
-            # 4. Inicializa Idle Processor (precisa de todos os outros)
             self.idle_processor = IdleProcessor(
                 self.state_manager,
                 self.emotion_engine,
@@ -121,29 +108,31 @@ class MaestroSystem:
             if not self._safe_initialize(self.idle_processor, "IdleProcessor"):
                 return False
             
-            # 5. Configuração final
             self._setup_signal_handlers()
             
             self.initialization_complete = True
             self.logger.info("Sistema Maestro inicializado com sucesso!")
             
-            # Mensagem de boas-vindas
             self._show_welcome_message()
             
             return True
             
         except Exception as e:
-            self.logger.error(f"Erro crítico na inicialização: {e}")
+            self.logger.error(f"Erro crítico na inicialização: {e}", exc_info=True)
             return False
     
-    def _safe_initialize(self, module, module_name: str) -> bool:
+    def _safe_initialize(self, module: Any, module_name: str) -> bool:
         """Inicializa um módulo com tratamento de erro"""
         try:
-            module.initialize()
+            if hasattr(module, 'initialize'):
+                module.initialize()
             self.logger.info(f"{module_name} inicializado com sucesso")
             return True
         except Exception as e:
-            self.logger.error(f"Erro ao inicializar {module_name}: {e}")
+            self.logger.error(f"Erro ao inicializar {module_name}: {e}", exc_info=True)
+            # Para o cliente LLM, não queremos que a falha seja fatal
+            if module_name == "OllamaClient":
+                return True
             return False
     
     def _setup_signal_handlers(self):
@@ -159,7 +148,6 @@ class MaestroSystem:
     def _show_welcome_message(self):
         """Exibe mensagem de boas-vindas"""
         try:
-            # Obtém informações do estado atual
             kairo_age = self.state_manager.get_kairo_age_hours()
             interaction_count = self.state_manager.get_interaction_count()
             
@@ -171,9 +159,7 @@ class MaestroSystem:
                     {"command": "show_separator", "parameter": {"style": "line"}}
                 ]
             }
-            
             self.action_executor.execute_plan(welcome_plan)
-            
         except Exception as e:
             self.logger.error(f"Erro ao exibir mensagem de boas-vindas: {e}")
     
@@ -187,68 +173,49 @@ class MaestroSystem:
             self.running = True
             self.logger.info("Iniciando loop principal do Maestro")
             
-            # Inicia thread de entrada do usuário
             self.input_thread = threading.Thread(target=self._input_loop, daemon=True)
             self.input_thread.start()
             
-            # Loop principal
             while self.running:
-                try:
-                    time.sleep(1)  # Evita uso excessivo de CPU
-                    
-                    # Aqui poderiam ser adicionadas outras tarefas periódicas
-                    
-                except KeyboardInterrupt:
-                    self.logger.info("Interrupção do usuário detectada")
-                    break
-                except Exception as e:
-                    self.logger.error(f"Erro no loop principal: {e}")
-            
-        except Exception as e:
-            self.logger.error(f"Erro crítico no loop principal: {e}")
+                time.sleep(1)
+
+        except KeyboardInterrupt:
+            self.logger.info("Interrupção do usuário detectada")
         finally:
             self.shutdown()
     
     def _input_loop(self):
-        """Loop de entrada do usuário"""
+        """Loop de entrada do usuário com prompt_toolkit."""
         try:
             while self.running:
                 try:
-                    # Lê entrada do usuário
-                    user_input = input("\n👤 Você: ").strip()
+                    prompt_text = FormattedText([('bold', "\n👤 Você: ")])
+                    user_input = self.session.prompt(prompt_text).strip()
                     
                     if not user_input:
                         continue
                     
-                    # Processa comandos especiais
                     if user_input.startswith('/'):
                         self._process_command(user_input)
-                        continue
+                    else:
+                        # Lança o processamento da mensagem em uma nova thread para não bloquear o input
+                        processing_thread = threading.Thread(target=self._process_user_message, args=(user_input,))
+                        processing_thread.start()
                     
-                    # Processa mensagem normal
-                    self._process_user_message(user_input)
-                    
-                except EOFError:
-                    # Ctrl+D pressionado
-                    self.logger.info("EOF detectado - encerrando...")
+                except (EOFError, KeyboardInterrupt):
+                    self.logger.info("Sinal de encerramento recebido no input. Encerrando...")
                     self.running = False
                     break
-                except KeyboardInterrupt:
-                    # Ctrl+C pressionado
-                    self.logger.info("Interrupção detectada - encerrando...")
-                    self.running = False
-                    break
-                except Exception as e:
-                    self.logger.error(f"Erro no loop de entrada: {e}")
-                    
         except Exception as e:
-            self.logger.error(f"Erro crítico no loop de entrada: {e}")
-    
+            self.logger.error(f"Erro crítico no loop de entrada: {e}", exc_info=True)
+            self.running = False
+
     def _process_command(self, command: str):
         """Processa comandos especiais do usuário"""
         try:
-            cmd = command.lower().strip()
-            
+            cmd_parts = command.lower().split()
+            cmd = cmd_parts[0]
+
             if cmd == '/help':
                 self.executor.execute_action("show_help", {})
             elif cmd == '/status':
@@ -263,34 +230,22 @@ class MaestroSystem:
                 self.running = False
             else:
                 self.executor.execute_action("speak", {"text": f"Comando desconhecido: {command}. Digite /help para ver comandos disponíveis."})
-                
         except Exception as e:
             self.logger.error(f"Erro ao processar comando {command}: {e}")
     
     def _process_user_message(self, message: str):
-        """Processa mensagem normal do usuário"""
+        """Processa a mensagem do usuário (agora em uma thread separada)."""
         try:
-            # Atualiza timestamp de interação
             self.idle_processor.update_interaction_time()
-
-            # Registra mensagem na memória com detecção de informações importantes
             user_id = self.state_manager.get_current_user_id()
-            memory_id = self.state_manager.add_memory(f"Usuário disse: {message}", "user_message", user_id)
-
-            # Analisa emocionalmente a mensagem (com filtro anti-spam)
+            self.state_manager.add_memory(f"Usuário disse: {message}", "user_message", user_id)
             self.emotion_engine.analyze_text(message, "user")
-
-            # Analisa para aprendizado de personalidade
             self.personality_core.analyze_interaction(message, "user_message")
 
-            # Gera prompt contextualizado
             prompt = self.prompt_engine.generate_prompt(message, "conversation")
-
-            # Envia para Ollama
             response = self.ollama_client.send_prompt(prompt)
 
             if response:
-                # Registra resposta na memória
                 if "actions" in response:
                     for action in response["actions"]:
                         if action.get("command") == "speak":
@@ -298,9 +253,7 @@ class MaestroSystem:
                             if response_text:
                                 self.state_manager.add_memory(f"Kairo respondeu: {response_text}", "kairo_response", user_id)
 
-                # Executa plano de ação
                 success = self.action_executor.execute_plan(response)
-
                 if not success:
                     self.logger.warning("Falha ao executar plano de ação")
                     self._handle_execution_failure()
@@ -309,13 +262,12 @@ class MaestroSystem:
                 self._handle_ollama_failure()
 
         except Exception as e:
-            self.logger.error(f"Erro ao processar mensagem do usuário: {e}")
+            self.logger.error(f"Erro ao processar mensagem do usuário: {e}", exc_info=True)
             self._handle_processing_error(str(e))
 
     def _show_system_status(self):
         """Exibe status detalhado do sistema"""
         try:
-            # Coleta informações de todos os módulos
             status_data = {
                 "Sistema": "Maestro v1.0",
                 "Status": "Funcionando" if self.running else "Parado",
@@ -326,52 +278,28 @@ class MaestroSystem:
                 "Executor": self.executor.executor_id,
                 "Ações executadas": self.action_executor.stats["total_actions"]
             }
-            
-            # Adiciona informações emocionais
             dominant_emotion, intensity = self.emotion_engine.get_dominant_emotion()
             status_data["Emoção dominante"] = f"{dominant_emotion} ({intensity:.1f})"
-            
-            # Adiciona traço de personalidade mais desenvolvido
             learning_progress = self.personality_core.get_learning_progress()
             most_developed = learning_progress.get("most_developed_trait", "Nenhum")
             status_data["Traço mais desenvolvido"] = most_developed
-            
             self.executor.execute_action("show_status", {"data": status_data})
-            
         except Exception as e:
             self.logger.error(f"Erro ao exibir status: {e}")
     
     def _handle_execution_failure(self):
         """Trata falha na execução de ações"""
-        fallback_plan = {
-            "internal_monologue": "Houve um problema ao executar minha resposta.",
-            "actions": [
-                {"command": "speak", "parameter": {"text": "Desculpe, tive um problema interno. Pode repetir sua mensagem?"}}
-            ]
-        }
-        
+        fallback_plan = {"internal_monologue": "Houve um problema ao executar minha resposta.", "actions": [{"command": "speak", "parameter": {"text": "Desculpe, tive um problema interno. Pode repetir sua mensagem?"}}]}
         self.action_executor.execute_plan(fallback_plan)
     
     def _handle_ollama_failure(self):
-        """Trata falha na comunicação com Ollama"""
-        fallback_plan = {
-            "internal_monologue": "Não consegui me comunicar com meu sistema de processamento.",
-            "actions": [
-                {"command": "speak", "parameter": {"text": "Desculpe, estou com problemas de comunicação interna. Tente novamente em alguns momentos."}}
-            ]
-        }
-        
+        """Trata falha na comunicação com o Ollama"""
+        fallback_plan = {"internal_monologue": "Não consegui me comunicar com meu sistema de processamento.", "actions": [{"command": "speak", "parameter": {"text": "Desculpe, estou com problemas de comunicação interna. Tente novamente em alguns momentos."}}]}
         self.action_executor.execute_plan(fallback_plan)
     
     def _handle_processing_error(self, error_msg: str):
         """Trata erro geral de processamento"""
-        fallback_plan = {
-            "internal_monologue": f"Erro no processamento: {error_msg}",
-            "actions": [
-                {"command": "speak", "parameter": {"text": "Ops, algo deu errado no meu processamento. Pode tentar de novo?"}}
-            ]
-        }
-        
+        fallback_plan = {"internal_monologue": f"Erro no processamento: {error_msg}", "actions": [{"command": "speak", "parameter": {"text": "Ops, algo deu errado no meu processamento. Pode tentar de novo?"}}]}
         self.action_executor.execute_plan(fallback_plan)
     
     def shutdown(self):
@@ -383,7 +311,6 @@ class MaestroSystem:
             self.logger.info("Encerrando Sistema Maestro...")
             self.running = False
             
-            # Encerra módulos na ordem inversa
             modules_to_shutdown = [
                 (self.idle_processor, "IdleProcessor"),
                 (self.action_executor, "ActionExecutor"),
@@ -412,18 +339,13 @@ class MaestroSystem:
 def main():
     """Função principal"""
     try:
-        # Cria e inicializa sistema
         maestro = MaestroSystem()
-        
         if maestro.initialize("cli"):
-            # Executa sistema
             maestro.run()
         else:
             print("Erro: Falha na inicialização do sistema Maestro")
             return 1
-        
         return 0
-        
     except Exception as e:
         print(f"Erro crítico: {e}")
         return 1

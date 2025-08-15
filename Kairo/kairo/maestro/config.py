@@ -22,15 +22,6 @@ OLLAMA_CONFIG = {
     "max_tokens": 1000
 }
 
-# Configurações da OpenAI
-OPENAI_CONFIG = {
-    "api_key": os.getenv("OPENAI_API_KEY"),
-    "model": "gpt-4-turbo",
-    "streaming_model": "gpt-4-turbo",
-    "temperature": 0.7,
-    "max_tokens": 1500
-}
-
 # Configurações do sistema de personalidade evolutiva
 PERSONALITY_CONFIG = {
     "learning_rate": 0.1,  # Taxa de aprendizado para mudanças de personalidade

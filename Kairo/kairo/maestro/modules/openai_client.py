@@ -1,4 +1,5 @@
 import os
+import json
 import openai
 from openai import OpenAI
 from config import OPENAI_CONFIG
@@ -45,9 +46,15 @@ class OpenAIClient:
                 model=self.model,
                 messages=[{"role": "user", "content": prompt}],
                 temperature=temperature if temperature is not None else OPENAI_CONFIG.get("temperature", 0.7),
-                max_tokens=max_tokens if max_tokens is not None else OPENAI_CONFIG.get("max_tokens", 1500)
+                max_tokens=max_tokens if max_tokens is not None else OPENAI_CONFIG.get("max_tokens", 1500),
+                response_format={"type": "json_object"}
             )
-            return response.choices[0].message.content
+            response_content = response.choices[0].message.content
+            return json.loads(response_content)
+        except json.JSONDecodeError as e:
+            self.logger.error(f"Failed to decode JSON response from OpenAI: {e}")
+            self.logger.error(f"Raw response: {response_content}")
+            return {"error": "Invalid JSON response from LLM"}
         except Exception as e:
             self.logger.error(f"Error sending prompt to OpenAI: {e}")
             return {"error": str(e)}

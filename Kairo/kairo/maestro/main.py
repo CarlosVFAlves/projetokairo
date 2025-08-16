@@ -269,7 +269,7 @@ class MaestroSystem:
             prompt = self.prompt_engine.generate_prompt(message, "conversation")
             response = self.llm_client.send_prompt(prompt)
 
-            if response:
+            if response and "error" not in response:
                 if "actions" in response:
                     for action in response["actions"]:
                         if action.get("command") == "speak":
@@ -282,7 +282,7 @@ class MaestroSystem:
                     self.logger.warning("Falha ao executar plano de ação")
                     self._handle_execution_failure()
             else:
-                self.logger.error("Nenhuma resposta do LLM")
+                self.logger.error(f"Nenhuma resposta ou erro do LLM: {response}")
                 self._handle_llm_failure()
 
         except Exception as e:
